@@ -1,48 +1,43 @@
-from fastapi import FastAPI
-import subprocess, tempfile, os, shutil, sys
-import textwrap
+# mcp_servers/tester_server.py
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from utils.test_runner import run_pytest_on_files
 
-app = FastAPI(title="MCP - Tester")
-
-# Keep tests green if none provided: avoids infinite loops for simple scripts
-DUMMY_TEST = textwrap.dedent("""
-def test_placeholder():
-    assert True
-""")
+app = FastAPI(title="MCP Tester Server")
 
 @app.post("/pytest")
-def run_tests(request: dict):
-    code = request.get("code", "")
-    tmpdir = tempfile.mkdtemp(prefix="mcp_test_")
-    code_path = os.path.join(tmpdir, "main.py")
-    test_path = os.path.join(tmpdir, "test_placeholder.py")
+async def run_tests(request: Request):
     try:
-        with open(code_path, "w", encoding="utf-8") as f:
-            f.write(code)
-        with open(test_path, "w", encoding="utf-8") as f:
-            f.write(DUMMY_TEST)
+        data = await request.json()
+        files = data.get("files", {}) or {}
 
-        proc = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q"],
-            cwd=tmpdir,
-            capture_output=True,
-            text=True,
-            timeout=15
+        # Detect explicit tests from payload
+        has_tests = any(
+            name.startswith("test_") and name.endswith(".py") or name.endswith("_test.py")
+            for name in files.keys()
         )
-        return {
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "returncode": proc.returncode,
-            "timed_out": False
-        }
-    except subprocess.TimeoutExpired as e:
-        return {
-            "stdout": e.stdout or "",
-            "stderr": (e.stderr or "") + "TIMEOUT",
-            "returncode": 124,
-            "timed_out": True
-        }
+
+        if not has_tests:
+            # ✨ If no tests provided, treat as success.
+            # This avoids the default FastAPI test that breaks simple scripts.
+            return JSONResponse({
+                "passed": True,
+                "returncode": 0,
+                "stdout": "NO_TESTS",
+                "stderr": "",
+                "timed_out": False,
+                "error": None
+            })
+
+        # Run only the provided tests (no auto-injected defaults)
+        res = run_pytest_on_files(files, timeout=30, create_default_test=False)
+        return JSONResponse(res)
     except Exception as e:
-        return {"stdout": "", "stderr": str(e), "returncode": -1, "timed_out": False}
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+        return JSONResponse({
+            "passed": False,
+            "returncode": -1,
+            "stdout": "",
+            "stderr": str(e),
+            "timed_out": False,
+            "error": str(e)
+        }, status_code=500)

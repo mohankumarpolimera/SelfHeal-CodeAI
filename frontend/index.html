@@ -1,26 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Self-Healing Code AI</title>
-    <link rel="stylesheet" href="/frontend/style.css">
+  <meta charset="utf-8" />
+  <title>Self-Healing Code AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="/frontend/style.css" rel="stylesheet" />
 </head>
 <body>
-    <div class="container">
-        <h1>Self-Healing Code AI</h1>
-        <textarea id="userInput" placeholder="Type your coding request here..."></textarea>
-        <button id="runBtn">Run</button>
+  <main class="container">
+    <section class="card">
+      <label for="prompt" class="label">Prompt</label>
+      <textarea id="prompt" name="prompt" rows="8" placeholder="e.g. Write a python calculator program"></textarea>
 
-        <div id="logs">
-            <h2>Workflow Logs:</h2>
-            <pre id="logOutput"></pre>
-        </div>
+      <div class="actions">
+        <button id="runBtn" type="button" class="btn">Run</button>
+      </div>
 
-        <div id="finalCode">
-            <h2>Final Healed Code:</h2>
-            <pre id="codeOutput"></pre>
-        </div>
-    </div>
-    <script src="/frontend/script.js"></script>
+      <h2>Workflow Logs:</h2>
+      <pre id="logOutput" class="logs"></pre>
+
+      <h2>Final Healed Code:</h2>
+      <pre id="codeOutput" class="code"></pre>
+
+      <div class="meta">
+        <span id="validated"></span>
+        <span id="attempts"></span>
+      </div>
+    </section>
+  </main>
+
+  <!-- load after DOM so querySelector finds elements -->
+  <script src="/frontend/script.js"></script>
 </body>
 </html>

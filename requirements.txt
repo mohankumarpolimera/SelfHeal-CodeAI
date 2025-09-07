@@ -2,7 +2,7 @@ fastapi==0.115.0
 uvicorn==0.30.0
 langchain==0.1.16
 langgraph==0.0.45
-chromadb==0.5.3
+chromadb==1.0.20
 requests==2.32.3
 pytest==8.3.2
 groq==0.6.0

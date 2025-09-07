@@ -1,21 +1,12 @@
-from utils.mcp_client import MCPClient
-
+# agents/learner.py
 class LearnerAgent:
-    def __init__(self):
-        self.client = MCPClient("http://127.0.0.1:8005")  # chroma_server
-
-    async def learn_patterns(self):
-        # Fetch all stored experiences
-        entries = await self.client.call("chroma", {"action": "fetch_all"})
-        
-        patterns = {"common_errors": {}, "fix_strategies": {}}
-
-        for entry in entries.get("data", []):
-            error = entry.get("error")
-            fix = entry.get("fix")
-
-            if error and fix:
-                patterns["common_errors"][error] = fix
-                patterns["fix_strategies"][fix] = error
-
-        return patterns
+    def learn_patterns(self, state: dict):
+        state.setdefault("debug", []).append({"node": "learner", "attempts": int(state.get("attempts", 0))})
+        errors = state.get("errors") or []
+        patterns = state.get("learner_patterns") or {}
+        if errors:
+            for e in errors:
+                key = (str(e)[:80] or "unknown").strip()
+                patterns[key] = patterns.get(key, 0) + 1
+        state["learner_patterns"] = patterns
+        return state

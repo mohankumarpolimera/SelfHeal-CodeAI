@@ -3,34 +3,33 @@ import ast
 from typing import Optional
 
 try:
-    # Optional: if you later want to use MCP here, the clients are ready.
-    from utils.mcp_client import MCPClient  # noqa
+    from utils.mcp_client import MCPClient  # noqa: F401
 except Exception:
     MCPClient = None  # type: ignore
 
+HARD_KWS = ("Syntax", "Error", "Exception", "ImportError", "NameError", "ModuleNotFoundError")
+
+def _has_hard_issue(items) -> bool:
+    if not items:
+        return False
+    for it in items:
+        s = str(it)
+        if any(kw in s for kw in HARD_KWS):
+            return True
+    return False
 
 class ValidatorAgent:
-    """
-    Lightweight validator for the final pass:
-      - Hard-fails on syntax errors only.
-      - Style/security suggestions => warnings (do NOT block).
-    Accepts optional MCP endpoints but doesn't re-run code to avoid loops;
-    runtime/tests are already covered by ErrorAnalyzer.
-    """
-
     def __init__(self, sandbox_url: Optional[str] = None, tester_url: Optional[str] = None):
         self.sandbox_url = sandbox_url
         self.tester_url = tester_url
-        # If you ever want to use MCP here:
-        # self.sandbox = MCPClient(sandbox_url) if (MCPClient and sandbox_url) else None
-        # self.tester  = MCPClient(tester_url)  if (MCPClient and tester_url)  else None
 
     def validate_code(self, state: dict):
-        code = state.get("code", "") or ""
-        issues = []
-        warnings = []
+        dbg = state.setdefault("debug", [])
+        dbg.append({"node": "validate", "attempts": int(state.get("attempts", 0))})
 
-        # 1) Syntax check => ONLY hard failure
+        code = state.get("code", "") or ""
+        issues, warnings = [], []
+
         try:
             ast.parse(code)
             syntax_ok = True
@@ -38,15 +37,19 @@ class ValidatorAgent:
             syntax_ok = False
             issues.append(f"Syntax: {e}")
 
-        # 2) (Optional) basic policy checks → warnings only
-        # Keep these as warnings so we don't churn in fix loops for trivial style.
-        if "print(" in code:
-            warnings.append("Style: found print(); prefer logging for apps (warning only).")
         if "eval(" in code or "exec(" in code:
-            warnings.append("Security: avoid eval/exec when possible (warning only).")
+            warnings.append("Security: avoid eval/exec (warning).")
+        if "print(" in code:
+            warnings.append("Style: prefer logging over print() (warning).")
 
-        # Store results
-        state["validation_issues"] = issues           # block only if non-empty
-        state["validation_warnings"] = warnings      # non-blocking
-        state["validated"] = syntax_ok and (len(issues) == 0)
-        return state
+        hard_fail = (not syntax_ok) or _has_hard_issue(issues)
+        validated = not hard_fail
+
+        dbg.append({"node": "validate_out", "validated": validated, "issues": issues, "warnings": warnings})
+
+        return {
+            **state,
+            "validation_issues": issues,
+            "validation_warnings": warnings,
+            "validated": validated,
+        }

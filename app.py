@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request                       # ✨ NEW: Request
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse   # ✨ NEW: JSONResponse
-
+import socket
 # ✨ NEW: hook the graph runner
 from graph.selfheal_graph import execute_selfheal          # <-- you'll add this function
 
@@ -21,7 +21,14 @@ from graph.selfheal_graph import execute_selfheal          # <-- you'll add this
 load_dotenv()
 
 app = FastAPI(title="SelfHeal Code AI")
+# ------------------------
+# Utility to check port availability
 
+def _port_in_use(port: int, host: str = "127.0.0.1") -> bool:
+    """Return True if something is already listening on host:port."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.2)
+        return s.connect_ex((host, port)) == 0
 # ------------------------
 # Background MCP Servers
 # ------------------------
@@ -31,7 +38,7 @@ def run_server(module: str, port: int):
     uvicorn.run(f"{module}:app", host="127.0.0.1", port=port, reload=False, log_level="info")
 
 def start_mcp_servers():
-    """Start all MCP microservers as separate processes."""
+    """Start all MCP microservers as separate processes (idempotent)."""
     servers = [
         ("mcp_servers.sandbox_server", 8001),
         ("mcp_servers.tester_server", 8002),
@@ -41,12 +48,16 @@ def start_mcp_servers():
     ]
     procs = []
     for module, port in servers:
+        if _port_in_use(port):
+            print(f"[SKIP] {module} on port {port} already running")
+            continue
         p = multiprocessing.Process(target=run_server, args=(module, port))
         p.daemon = True
         p.start()
         procs.append(p)
         print(f"[BOOT] Started {module} on port {port}")
     return procs
+
 
 @app.on_event("startup")
 async def startup_event():

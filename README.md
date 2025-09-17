@@ -71,8 +71,7 @@ selfheal-code-ai/
 │── app.py # FastAPI app (boot + serve frontend + MCP)
 │── requirements.txt # Dependencies
 │── README.md # Documentation
-
-
+```
 ---
 
 ## ⚙️ Tech Stack  
@@ -94,36 +93,37 @@ selfheal-code-ai/
 ```bash
 git clone https://github.com/mohankumarpolimera/selfheal-code-ai.git
 cd selfheal-code-ai
-
+```
 ### 2. Create virtual environment
 ```bash
 python -m venv venv
 source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
-
-3. Install dependencies
+```
+### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
-
-4. Add .env
+```
+### 4. Add .env
 # .env
 GROQ_API_KEY=your_groq_api_key
 
-5. Run the system
+### 5. Run the system
 ```bash
 python app.py
-
-6. Open in browser
+```
+### 6. Open in browser
 
 👉 Visit http://127.0.0.1:8000
 
-🧩 Example Usage
+**🧩 Example Usage**
 
-Prompt:
+### Prompt:
 
-create a calculator program in python
+### create a calculator program in python
 
-
+mermaid
+```
 Workflow:
 
 Code Generator → produces calculator code
@@ -139,3 +139,4 @@ Memory → stores solution
 Learner → updates for future requests
 
 ✅ Output: final working calculator program.
+```

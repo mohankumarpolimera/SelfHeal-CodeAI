@@ -36,7 +36,8 @@ and watch it generate → validate → fix → finalize.
 ---
 
 ## 📂 Folder Structure
-
+mermaid
+```
 selfheal-code-ai/
 │── agents/
 │ ├── code_generator.py # Groq LLM agent for code generation

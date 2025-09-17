@@ -36,7 +36,7 @@ and watch it generate → validate → fix → finalize.
 ---
 
 ## 📂 Folder Structure
-mermaid
+
 ```
 selfheal-code-ai/
 │── agents/
@@ -105,27 +105,28 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 ```
 ### 4. Add .env
-# .env
+```bash
+ .env
 GROQ_API_KEY=your_groq_api_key
-
+```
 ### 5. Run the system
 ```bash
 python app.py
 ```
 ### 6. Open in browser
-
+```bash
 👉 Visit http://127.0.0.1:8000
-
+```
 **🧩 Example Usage**
 
 ### Prompt:
-
-### create a calculator program in python
-
-mermaid
+```bash
+create a calculator program in python
 ```
-Workflow:
 
+
+### Workflow:
+```
 Code Generator → produces calculator code
 
 Validator → runs in sandbox
